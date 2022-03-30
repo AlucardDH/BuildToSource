@@ -20,16 +20,22 @@ public class BuildInputStream implements AutoCloseable {
   private InputStream is;
 
   private int readINT(int intLengthBytes) throws IOException {
-    BitSet bitSet = readBitSet((intLengthBytes));
-    int result = (int)bitSet.toLongArray()[0];
-    //Logger.print("readINT",result);
+    BitSet bitSet = readBitSet(intLengthBytes);
+    long[] longArray = bitSet.toLongArray();
+    int result = longArray.length>0 ? (int)bitSet.toLongArray()[0] : 0;
+    return result;
+  }
+
+  private int toUInt(BitSet bitSet) {
+    bitSet.set(bitSet.length(),false);
+    long[] longArray = bitSet.toLongArray();
+    int result = longArray.length>0 ? (int)longArray[0] : 0;
     return result;
   }
 
   private int readUINT(int intLengthBytes) throws IOException {
-    BitSet bitSet = readBitSet((intLengthBytes));
+    BitSet bitSet = readBitSet(intLengthBytes);
     int result = toUInt(bitSet);
-    Logger.print("readUINT",result);
     return result;
   }
 
@@ -60,51 +66,60 @@ public class BuildInputStream implements AutoCloseable {
     return BitSet.valueOf(data);
   }
 
-  private int toUInt(BitSet data) {
-    data.set(data.size(),false);
-    return (int)data.toLongArray()[0];
-  }
-
   public BuildMap readMap() throws IOException {
     BuildMap result = new BuildMap();
 
     // INT32LE	mapversion	File format version number (latest in released games is 7, source ports use 8 and 9)
     result.setVersion(readINT32LE());
-    //Logger.print("Map version",result.getVersion());
+    Logger.print("Map version",result.getVersion());
 
     // INT32LE	posx	Player start point, X coordinate
     // INT32LE	posy	Player start point, Y coordinate
     // INT32LE	posz	Player start point, Z coordinate
     result.setPlayerStartPosition(readCoordinates3D());
-    //Logger.print("Player coordinates",result.getPlayerStartPosition());
+    Logger.print("Player coordinates",result.getPlayerStartPosition());
 
     // INT16LE	ang	Player starting angle
     result.setPlayerStartAngle(readINT16LE());
+    Logger.print("Player start angle",result.getPlayerStartAngle());
 
-    Logger.print(result);
     // INT16LE	cursectnum	Sector number containing the start point
     result.setPlayerStartSectorNumber(readINT16LE());
+    Logger.print("Player start sector",result.getPlayerStartSectorNumber());
 
     // UINT16LE	numsectors	Number of sectors in the map
     result.setSectorsCount(readUINT16LE());
+    Logger.print("Sector count",result.getSectorsCount());
     for (int sectorNumber = 0; sectorNumber < result.getSectorsCount(); sectorNumber++) {
       // SECTOR[numsectors]	sector	Information about each sector
       result.getSectors()[sectorNumber] = readSector();
+      Logger.print("Sector",sectorNumber,":\n",result.getSectors()[sectorNumber]);
     }
 
     // UINT16LE	numwalls	Number of walls in the map
     result.setWallsCount(readUINT16LE());
-    for (int wallNumber = 0; wallNumber < result.getSectorsCount(); wallNumber++) {
+    Logger.print("Wall count",result.getWallsCount());
+    for (int wallNumber = 0; wallNumber < result.getWallsCount(); wallNumber++) {
       // WALL[numwalls]	wall	Information about each wall
       result.getWalls()[wallNumber] = readWall();
+      Logger.print("Wall",wallNumber,":\n",result.getWalls()[wallNumber]);
     }
 
     // UINT16LE	numsprites	Number of sprites in the map
     result.setSpritesCount(readUINT16LE());
-    for (int spriteNumber = 0; spriteNumber < result.getSectorsCount(); spriteNumber++) {
+    Logger.print("Sprite count",result.getSpritesCount());
+    for (int spriteNumber = 0; spriteNumber < result.getSpritesCount(); spriteNumber++) {
       // SPRITE[numsprites]	sprite	Information about each sprite
       result.getSprites()[spriteNumber] = readSprite();
+      Logger.print("Sprite",spriteNumber,":\n",result.getSprites()[spriteNumber]);
     }
+
+    int remaining = 0;
+    while(is.read()!=-1) {
+      remaining++;
+    }
+    Logger.print("End with",remaining,"bytes remaining");
+
 
     return result;
   }

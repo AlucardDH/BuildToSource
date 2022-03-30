@@ -2,8 +2,10 @@ package com.dh.buildtosource.build.model;
 
 import com.dh.buildtosource.build.parser.Binary;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString
 public class Sprite extends AbstractData {
 
   private Coordinates3D coordinates;

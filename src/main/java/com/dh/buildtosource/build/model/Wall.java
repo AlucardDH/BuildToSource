@@ -2,8 +2,10 @@ package com.dh.buildtosource.build.model;
 
 import com.dh.buildtosource.build.parser.Binary;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString
 public class Wall extends AbstractData {
 
   // INT32LE	x	X-coordinate of left side of wall (right side coordinate is obtained from the next wall's left side)
