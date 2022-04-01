@@ -21,21 +21,24 @@ public class BuildInputStream implements AutoCloseable {
 
   private int readINT(int intLengthBytes) throws IOException {
     BitSet bitSet = readBitSet(intLengthBytes);
+    int sign = bitSet.get(intLengthBytes*2-1) ? -1 : 1;
+    bitSet.set(intLengthBytes*2-1,false);
     long[] longArray = bitSet.toLongArray();
-    int result = longArray.length>0 ? (int)bitSet.toLongArray()[0] : 0;
+    int result = longArray.length>0 ? sign*((int)bitSet.toLongArray()[0]) : 0;
     return result;
   }
 
-  private int toUInt(BitSet bitSet) {
-    bitSet.set(bitSet.length(),false);
-    long[] longArray = bitSet.toLongArray();
-    int result = longArray.length>0 ? (int)longArray[0] : 0;
-    return result;
+  private int toUInt(int intLengthBytes,BitSet bitSet) {
+    long result = 0;
+    for(int i=0;i<intLengthBytes*8;i++) result += bitSet.get(i) ? (long)Math.pow(2,i): 0;
+    //long[] longArray = bitSet.toLongArray();
+    //int result = longArray.length>0 ? (int)longArray[0] : 0;
+    return (int)result;
   }
 
   private int readUINT(int intLengthBytes) throws IOException {
     BitSet bitSet = readBitSet(intLengthBytes);
-    int result = toUInt(bitSet);
+    int result = toUInt(intLengthBytes,bitSet);
     return result;
   }
 
@@ -59,6 +62,10 @@ public class BuildInputStream implements AutoCloseable {
     return readUINT(2);
   }
 
+  public int readUINT32LE() throws IOException {
+    return readUINT(4);
+  }
+
   public BitSet readBitSet(int intLengthBytes) throws IOException {
     byte[] data = new byte[intLengthBytes];
     int readBytes = is.read(data);
@@ -70,7 +77,7 @@ public class BuildInputStream implements AutoCloseable {
     BuildMap result = new BuildMap();
 
     // INT32LE	mapversion	File format version number (latest in released games is 7, source ports use 8 and 9)
-    result.setVersion(readINT32LE());
+    result.setVersion(readUINT32LE());
     Logger.print("Map version",result.getVersion());
 
     // INT32LE	posx	Player start point, X coordinate
@@ -84,7 +91,7 @@ public class BuildInputStream implements AutoCloseable {
     Logger.print("Player start angle",result.getPlayerStartAngle());
 
     // INT16LE	cursectnum	Sector number containing the start point
-    result.setPlayerStartSectorNumber(readINT16LE());
+    result.setPlayerStartSectorNumber(readUINT16LE());
     Logger.print("Player start sector",result.getPlayerStartSectorNumber());
 
     // UINT16LE	numsectors	Number of sectors in the map
@@ -126,16 +133,16 @@ public class BuildInputStream implements AutoCloseable {
 
   public Coordinates3D readCoordinates3D() throws IOException {
     Coordinates3D result = new Coordinates3D();
-    result.setX(readINT32LE());
-    result.setY(readINT32LE());
-    result.setZ(readINT32LE());
+    result.setX(readUINT32LE());
+    result.setY(readUINT32LE());
+    result.setZ(readUINT32LE());
     return result;
   }
 
   public Coordinates2D readCoordinates2D() throws IOException {
     Coordinates2D result = new Coordinates2D();
-    result.setX(readINT32LE());
-    result.setY(readINT32LE());
+    result.setX(readUINT32LE());
+    result.setY(readUINT32LE());
     return result;
   }
 
@@ -155,14 +162,14 @@ public class BuildInputStream implements AutoCloseable {
     Sector result = new Sector();
     
     //INT16LE	wallptr	Index to first wall in sector ! Index in what units? count? offset?
-    result.setFirstWallIndex(readINT16LE());
+    result.setFirstWallIndex(readUINT16LE());
     //INT16LE	wallnum	Number of walls in sector
-    result.setWallCount(readINT16LE());
+    result.setWallCount(readUINT16LE());
 
     // INT32LE	ceilingz	Z-coordinate (height) of ceiling at first point of sector
-    result.getCeilingStats().setZ(readINT32LE());
+    result.getCeilingStats().setZ(readUINT32LE());
     // INT32LE	floorz	Z-coordinate (height) of floor at first point of sector
-    result.getFloorStats().setZ(readINT32LE());
+    result.getFloorStats().setZ(readUINT32LE());
 
     // INT16LE	ceilingstat
     result.getCeilingStats().updateFlags(readINT16LE());
@@ -217,11 +224,11 @@ public class BuildInputStream implements AutoCloseable {
     result.setFirstPoint(readCoordinates2D());
 
     // INT16LE	point2	Index to next wall on the right (always in the same sector)
-    result.setNextPoint(readINT16LE());
+    result.setNextPoint(readUINT16LE());
     // INT16LE	nextwall	Index to wall on other side of wall (-1 if there is no sector there)
-    result.setNextWall(readINT16LE());
+    result.setNextWall(readUINT16LE());
     // INT16LE	nextsector	Index to sector on other side of wall (-1 if there is no sector)
-    result.setNextSector(readINT16LE());
+    result.setNextSector(readUINT16LE());
 
     // INT16LE	cstat
     // bit 0: 1 = Blocking wall (use with clipmove, getzrange)
