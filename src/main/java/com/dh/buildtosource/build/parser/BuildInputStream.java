@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.BitSet;
 
 @AllArgsConstructor
 public class BuildInputStream implements AutoCloseable {
@@ -20,25 +19,23 @@ public class BuildInputStream implements AutoCloseable {
   private InputStream is;
 
   private int readINT(int intLengthBytes) throws IOException {
-    BitSet bitSet = readBitSet(intLengthBytes);
-    int sign = bitSet.get(intLengthBytes*2-1) ? -1 : 1;
-    bitSet.set(intLengthBytes*2-1,false);
-    long[] longArray = bitSet.toLongArray();
-    int result = longArray.length>0 ? sign*((int)bitSet.toLongArray()[0]) : 0;
+    String binary = readBinaryLE(intLengthBytes);
+    int result = toInt(binary);
     return result;
   }
 
-  private int toUInt(int intLengthBytes,BitSet bitSet) {
-    long result = 0;
-    for(int i=0;i<intLengthBytes*8;i++) result += bitSet.get(i) ? (long)Math.pow(2,i): 0;
-    //long[] longArray = bitSet.toLongArray();
-    //int result = longArray.length>0 ? (int)longArray[0] : 0;
-    return (int)result;
+  private static int toUInt(String binary) {
+    return Integer.parseInt(binary,2);
+  }
+
+  private static int toInt(String binary) {
+    int sign = binary.startsWith("1") ? -1 : 1;
+    return sign*Integer.parseInt(binary.substring(1),2);
   }
 
   private int readUINT(int intLengthBytes) throws IOException {
-    BitSet bitSet = readBitSet(intLengthBytes);
-    int result = toUInt(intLengthBytes,bitSet);
+    String binary = readBinaryLE(intLengthBytes);
+    int result = toUInt(binary);
     return result;
   }
 
@@ -66,11 +63,24 @@ public class BuildInputStream implements AutoCloseable {
     return readUINT(4);
   }
 
-  public BitSet readBitSet(int intLengthBytes) throws IOException {
+  public String readBinaryLE(int intLengthBytes) throws IOException {
     byte[] data = new byte[intLengthBytes];
     int readBytes = is.read(data);
     if(readBytes<intLengthBytes) throw new IOException("Can not read enougth bytes ("+intLengthBytes+")");
-    return BitSet.valueOf(data);
+
+    String binary = bytesToBinaryLE(data);
+    return binary;
+  }
+
+  public static String bytesToBinaryLE(byte[] bytes) {
+    StringBuilder sb = new StringBuilder();
+    for(int bI=bytes.length-1;bI>=0;bI--) {
+      byte b = bytes[bI];
+      for(int i=7;i>=0;i--) {
+        sb.append(b>>i & 1);
+      }
+    }
+    return sb.toString();
   }
 
   public BuildMap readMap() throws IOException {
@@ -133,16 +143,16 @@ public class BuildInputStream implements AutoCloseable {
 
   public Coordinates3D readCoordinates3D() throws IOException {
     Coordinates3D result = new Coordinates3D();
-    result.setX(readUINT32LE());
-    result.setY(readUINT32LE());
-    result.setZ(readUINT32LE());
+    result.setX(readINT32LE());
+    result.setY(readINT32LE());
+    result.setZ(readINT32LE());
     return result;
   }
 
   public Coordinates2D readCoordinates2D() throws IOException {
     Coordinates2D result = new Coordinates2D();
-    result.setX(readUINT32LE());
-    result.setY(readUINT32LE());
+    result.setX(readINT32LE());
+    result.setY(readINT32LE());
     return result;
   }
 
@@ -167,9 +177,9 @@ public class BuildInputStream implements AutoCloseable {
     result.setWallCount(readUINT16LE());
 
     // INT32LE	ceilingz	Z-coordinate (height) of ceiling at first point of sector
-    result.getCeilingStats().setZ(readUINT32LE());
+    result.getCeilingStats().setZ(readINT32LE());
     // INT32LE	floorz	Z-coordinate (height) of floor at first point of sector
-    result.getFloorStats().setZ(readUINT32LE());
+    result.getFloorStats().setZ(readINT32LE());
 
     // INT16LE	ceilingstat
     result.getCeilingStats().updateFlags(readINT16LE());
