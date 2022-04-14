@@ -6,17 +6,19 @@ import lombok.Data;
 public class GoldSourceRmfMap {
 
 //    float          version (usually 2.2): CD CC 0C 40 52 4D 46 ("????RMF")
-float version;
+    float version;
 
-    //    string(4)      "RMF"
-    String format;
+//    string(4)      "RMF"
+    String format = "RMF";
+
 //    int            number of vis groups
     int visGroupsCount;
-
 //    VisGroup[]     visgroups
     VisGroup[] visGroups;
+
 //    nstring        "CMapWorld"
-    String unknown1;
+    String type = "CMapWorld";
+
 //    byte[7]        ? (probably visgroup and Color fields but not used by VHE)
     byte[] unknown2;
 
