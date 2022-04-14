@@ -66,7 +66,7 @@ public class BuildInputStream implements AutoCloseable {
   public String readBinaryLE(int intLengthBytes) throws IOException {
     byte[] data = new byte[intLengthBytes];
     int readBytes = is.read(data);
-    if(readBytes<intLengthBytes) throw new IOException("Can not read enougth bytes ("+intLengthBytes+")");
+    if(readBytes<intLengthBytes) throw new IOException("Can not read enough bytes ("+intLengthBytes+")");
 
     String binary = bytesToBinaryLE(data);
     return binary;

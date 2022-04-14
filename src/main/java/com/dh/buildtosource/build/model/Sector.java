@@ -1,6 +1,6 @@
 package com.dh.buildtosource.build.model;
 
-import com.dh.buildtosource.build.parser.Binary;
+import com.dh.buildtosource.utils.Binary;
 import lombok.Data;
 import lombok.ToString;
 
