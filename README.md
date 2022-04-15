@@ -1,5 +1,5 @@
 # BuildToSource
-Convert Build Engine (DukeNukem3D, Shadow Warrior...) to GoldSource Engine (Half-life)
+Convert Build Engine (DukeNukem3D, Shadow Warrior...) map format to GoldSource Engine (Half-life) rmf format.
 
 # References 
 ## Build map format (MAP)
